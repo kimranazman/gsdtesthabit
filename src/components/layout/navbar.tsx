@@ -2,17 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, BarChart3, Home, ListChecks, Menu, Keyboard } from "lucide-react";
+import { Activity, BarChart3, Home, ListChecks, Keyboard, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import {
   Tooltip,
   TooltipContent,
@@ -21,7 +13,10 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { useState, useCallback } from "react";
+import { XpBar } from "@/components/gamification/xp-bar";
+import { getUserStats } from "@/lib/actions/gamification";
+import { getXpProgress } from "@/lib/gamification";
+import { useState, useCallback, useEffect } from "react";
 
 const navItems = [
   {
@@ -39,15 +34,53 @@ const navItems = [
     href: "/analytics",
     icon: BarChart3,
   },
+  {
+    label: "Achievements",
+    href: "/achievements",
+    icon: Trophy,
+  },
 ];
+
+interface XpData {
+  level: number;
+  xpIntoLevel: number;
+  xpNeededForNext: number;
+  progressPercent: number;
+  isMaxLevel: boolean;
+  totalXp: number;
+}
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [xpData, setXpData] = useState<XpData | null>(null);
 
   const openShortcuts = useCallback(() => setShortcutsOpen(true), []);
+
+  // Fetch XP data on mount and when path changes (to reflect new XP from completions)
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchXp() {
+      try {
+        const stats = await getUserStats();
+        if (cancelled) return;
+        const progress = getXpProgress(stats.totalXp);
+        setXpData({
+          level: progress.level,
+          xpIntoLevel: progress.xpIntoLevel,
+          xpNeededForNext: progress.xpNeededForNext,
+          progressPercent: progress.progressPercent,
+          isMaxLevel: progress.isMaxLevel,
+          totalXp: stats.totalXp,
+        });
+      } catch {
+        // Non-critical, silently fail
+      }
+    }
+    fetchXp();
+    return () => { cancelled = true; };
+  }, [pathname]);
 
   // Global keyboard shortcuts for navigation and help
   useKeyboardShortcuts({
@@ -74,6 +107,11 @@ export function Navbar() {
         keys: ["g", "a"],
         description: "Go to Analytics",
         handler: () => router.push("/analytics"),
+      },
+      {
+        keys: ["g", "v"],
+        description: "Go to Achievements",
+        handler: () => router.push("/achievements"),
       },
     ],
   });
@@ -118,6 +156,13 @@ export function Navbar() {
 
           {/* Desktop actions */}
           <div className="flex items-center gap-1">
+            {/* XP bar */}
+            {xpData && (
+              <Link href="/achievements" className="mr-1">
+                <XpBar {...xpData} />
+              </Link>
+            )}
+
             {/* Keyboard shortcuts button (desktop only) */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -136,51 +181,6 @@ export function Navbar() {
 
             {/* Theme toggle */}
             <ThemeToggle />
-
-            {/* Mobile Menu */}
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden size-9">
-                  <Menu className="size-5" />
-                  <span className="sr-only">Toggle menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[280px]">
-                <SheetHeader>
-                  <SheetTitle className="flex items-center gap-2">
-                    <Activity className="size-5 text-primary" />
-                    HabitTracker
-                  </SheetTitle>
-                  <SheetDescription>
-                    Track your daily habits and build streaks.
-                  </SheetDescription>
-                </SheetHeader>
-                <nav className="flex flex-col gap-1 px-4">
-                  {navItems.map((item) => {
-                    const isActive =
-                      item.href === "/"
-                        ? pathname === "/"
-                        : pathname.startsWith(item.href);
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                          isActive
-                            ? "bg-accent text-accent-foreground"
-                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        )}
-                      >
-                        <item.icon className="size-4" />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </nav>
-              </SheetContent>
-            </Sheet>
           </div>
         </div>
       </header>

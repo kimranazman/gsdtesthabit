@@ -18,6 +18,12 @@ import {
   calculateHabitComparison,
   calculateDayOfWeekPatterns,
 } from "@/lib/stats";
+import { motion, useReducedMotion } from "framer-motion";
+import {
+  fadeInUpVariants,
+  staggerContainerVariants,
+  staggerItemVariants,
+} from "@/components/motion";
 import type { Habit, Completion } from "@/lib/db/schema";
 
 interface AnalyticsClientProps {
@@ -134,71 +140,130 @@ export function AnalyticsClient({ habits, completions }: AnalyticsClientProps) {
     [habits, completionRecords, today]
   );
 
+  const prefersReduced = useReducedMotion();
+  const noMotion = !!prefersReduced;
+
   if (habits.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
+      <motion.div
+        className="flex flex-col items-center justify-center py-16 text-center"
+        variants={noMotion ? undefined : fadeInUpVariants}
+        initial={noMotion ? undefined : "hidden"}
+        animate={noMotion ? undefined : "visible"}
+      >
         <p className="text-muted-foreground">
           No active habits yet. Create some habits to see your analytics.
         </p>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in-0 duration-300">
+    <motion.div
+      className="space-y-6"
+      variants={noMotion ? undefined : staggerContainerVariants}
+      initial={noMotion ? undefined : "hidden"}
+      animate={noMotion ? undefined : "visible"}
+    >
       {/* Overall Stats */}
-      <OverallStatsCards {...overallStats} />
+      <motion.div variants={noMotion ? undefined : staggerItemVariants}>
+        <OverallStatsCards {...overallStats} />
+      </motion.div>
 
       {/* Heatmap */}
-      <HeatmapCalendar completionDates={allCompletionDates} />
+      <motion.div variants={noMotion ? undefined : staggerItemVariants}>
+        <HeatmapCalendar completionDates={allCompletionDates} />
+      </motion.div>
 
       {/* Tabs: Habits | Trends | Insights | Weekly | Monthly */}
-      <Tabs defaultValue="trends">
-        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-          <TabsList className="w-full justify-start">
-            <TabsTrigger value="trends">Trends</TabsTrigger>
-            <TabsTrigger value="insights">Insights</TabsTrigger>
-            <TabsTrigger value="habits">Habit Streaks</TabsTrigger>
-            <TabsTrigger value="weekly">Weekly</TabsTrigger>
-            <TabsTrigger value="monthly">Monthly</TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="trends" className="mt-4">
-          <TrendChart data={trendData} />
-        </TabsContent>
-
-        <TabsContent value="insights" className="mt-4 space-y-6">
-          <HabitComparison
-            best={habitComparison.best}
-            struggling={habitComparison.struggling}
-          />
-          <DayOfWeekChart data={dayOfWeekData} />
-        </TabsContent>
-
-        <TabsContent value="habits" className="mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {habitStats.map(({ habit, streak, rate7d, rate30d, rateAll }) => (
-              <HabitStreakCard
-                key={habit.id}
-                habit={habit}
-                streak={streak}
-                rate7d={rate7d}
-                rate30d={rate30d}
-                rateAll={rateAll}
-              />
-            ))}
+      <motion.div variants={noMotion ? undefined : staggerItemVariants}>
+        <Tabs defaultValue="trends">
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="w-full justify-start">
+              <TabsTrigger value="trends">Trends</TabsTrigger>
+              <TabsTrigger value="insights">Insights</TabsTrigger>
+              <TabsTrigger value="habits">Habit Streaks</TabsTrigger>
+              <TabsTrigger value="weekly">Weekly</TabsTrigger>
+              <TabsTrigger value="monthly">Monthly</TabsTrigger>
+            </TabsList>
           </div>
-        </TabsContent>
 
-        <TabsContent value="weekly" className="mt-4">
-          <WeeklySummaryView summaries={weeklySummaries} />
-        </TabsContent>
+          <TabsContent value="trends" className="mt-4">
+            <motion.div
+              initial={noMotion ? undefined : { opacity: 0, y: 10 }}
+              animate={noMotion ? undefined : { opacity: 1, y: 0 }}
+              transition={noMotion ? undefined : { type: "tween", duration: 0.35, ease: "easeOut" }}
+            >
+              <TrendChart data={trendData} />
+            </motion.div>
+          </TabsContent>
 
-        <TabsContent value="monthly" className="mt-4">
-          <MonthlySummaryView summaries={monthlySummaries} />
-        </TabsContent>
-      </Tabs>
-    </div>
+          <TabsContent value="insights" className="mt-4 space-y-6">
+            <motion.div
+              initial={noMotion ? undefined : { opacity: 0, y: 10 }}
+              animate={noMotion ? undefined : { opacity: 1, y: 0 }}
+              transition={noMotion ? undefined : { type: "tween", duration: 0.35, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              <HabitComparison
+                best={habitComparison.best}
+                struggling={habitComparison.struggling}
+              />
+              <DayOfWeekChart data={dayOfWeekData} />
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="habits" className="mt-4">
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              variants={noMotion ? undefined : {
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: { staggerChildren: 0.08, delayChildren: 0.05 },
+                },
+              }}
+              initial={noMotion ? undefined : "hidden"}
+              animate={noMotion ? undefined : "visible"}
+            >
+              {habitStats.map(({ habit, streak, rate7d, rate30d, rateAll }) => (
+                <motion.div
+                  key={habit.id}
+                  variants={noMotion ? undefined : staggerItemVariants}
+                >
+                  <HabitStreakCard
+                    habit={habit}
+                    streak={streak}
+                    rate7d={rate7d}
+                    rate30d={rate30d}
+                    rateAll={rateAll}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="weekly" className="mt-4">
+            <motion.div
+              initial={noMotion ? undefined : { opacity: 0, y: 10 }}
+              animate={noMotion ? undefined : { opacity: 1, y: 0 }}
+              transition={noMotion ? undefined : { type: "tween", duration: 0.35, ease: "easeOut" }}
+            >
+              <WeeklySummaryView summaries={weeklySummaries} />
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="monthly" className="mt-4">
+            <motion.div
+              initial={noMotion ? undefined : { opacity: 0, y: 10 }}
+              animate={noMotion ? undefined : { opacity: 1, y: 0 }}
+              transition={noMotion ? undefined : { type: "tween", duration: 0.35, ease: "easeOut" }}
+            >
+              <MonthlySummaryView summaries={monthlySummaries} />
+            </motion.div>
+          </TabsContent>
+        </Tabs>
+      </motion.div>
+    </motion.div>
   );
 }

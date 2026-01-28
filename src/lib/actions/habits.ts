@@ -5,6 +5,7 @@ import { habits } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod/v4";
+import { processHabitCreationGamification } from "@/lib/actions/gamification";
 
 const habitSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -50,8 +51,22 @@ export async function createHabit(data: HabitFormData) {
     })
     .returning();
 
+  // Process gamification (habit-creator, collector achievements)
+  let gamificationAchievements: { id: string; name: string; description: string }[] = [];
+  try {
+    const gamification = await processHabitCreationGamification();
+    gamificationAchievements = gamification.achievementsUnlocked.map((a) => ({
+      id: a.id,
+      name: a.name,
+      description: a.description,
+    }));
+  } catch (error) {
+    // Gamification is non-critical — don't fail habit creation
+    console.error("Gamification processing error:", error);
+  }
+
   revalidatePath("/habits");
-  return { habit: result[0] };
+  return { habit: result[0], achievementsUnlocked: gamificationAchievements };
 }
 
 export async function updateHabit(id: string, data: Partial<HabitFormData>) {

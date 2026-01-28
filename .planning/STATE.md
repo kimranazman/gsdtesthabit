@@ -5,77 +5,57 @@
 See: .planning/PROJECT.md (updated 2026-01-28)
 
 **Core value:** Users can track daily habits and see their streaks and completion patterns at a glance -- the daily check-in loop must feel effortless and satisfying.
-**Current focus:** Phase 4: Streaks & Statistics
+**Current focus:** Milestone 2 COMPLETE. All phases shipped.
 
 ## Current Position
 
-Phase: 4 of 6 (Streaks & Statistics)
-Plan: 0 of 4 in current phase
-Status: Ready to plan
-Last activity: 2026-01-28 — Phase 3 completed: Daily Tracking
+Phase: 11 of 11 (all complete)
+Plan: All plans complete
+Status: Milestone 2 complete
+Last activity: 2026-01-28 — Phase 11 completed: Mobile Bottom Navigation & Polish
 
-Progress: █████░░░░░ 50%
+Progress: ██████████ 100%
 
-## Performance Metrics
+## Milestone Summary
 
-**Velocity:**
-- Total plans completed: 9
-- Average duration: ~5 min
-- Total execution time: ~45 min
+### Milestone 1: Core App (Phases 1-6) — COMPLETE
+Built the full habit tracking app: database, CRUD, daily tracking, streaks, analytics, UX polish.
 
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1 | 3/3 | ~15 min | ~5 min |
-| 2 | 3/3 | ~15 min | ~5 min |
-| 3 | 3/3 | ~15 min | ~5 min |
-
-**Recent Trend:**
-- Last 5 plans: 02-02, 02-03, 03-01, 03-02, 03-03
-- Trend: Steady
-
-*Updated after each plan completion*
+### Milestone 2: Enhanced Mobile UX & Gamification (Phases 7-11) — COMPLETE
+- Phase 7: Framer Motion animations (spring physics, staggered lists, page transitions, reduced-motion support)
+- Phase 8: Swipe gestures (right-swipe complete, left-swipe reveal actions, day navigation swipe)
+- Phase 9: Gamification engine (XP, levels 1-50, 16 achievements, streak bonuses)
+- Phase 10: Gamification UI (XP bar, confetti celebrations, achievement toasts, floating +XP, achievements page)
+- Phase 11: Mobile polish (bottom nav, tap feedback, safe area insets, PWA manifest, visual consistency)
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- Init: No authentication (single user app)
-- Init: Vercel Postgres + Drizzle ORM for type-safe database
-- Init: shadcn/ui for accessible, Tailwind-native components
-- Init: Soft delete for habits (archive, preserve history)
-- Init: Store dates as DATE type, not TIMESTAMP (timezone safety)
-- Phase 1: Use local PostgreSQL for development (swap to Vercel Postgres for production)
-- Phase 1: Use `pg` + `drizzle-orm/node-postgres` adapter for local dev
-- Phase 1: Top navigation bar with Sheet-based mobile menu (simpler than sidebar for v1)
-- Phase 1: next-themes ThemeProvider set up for dark/light mode (wired in Phase 6)
-- Phase 2: Server actions for all mutations (create, update, archive habits; CRUD categories)
-- Phase 2: Separate queries file (src/lib/db/queries.ts) for server component data fetching
-- Phase 2: @dnd-kit for drag-and-drop with PointerSensor, TouchSensor, KeyboardSensor
-- Phase 2: Optimistic drag reorder with server persistence via reorderHabits action
-- Phase 2: Category filter pills with dropdown management (create, edit, delete)
-- Phase 2: Habit form dialog with color picker, icon grid, frequency selector, category assignment
-- Phase 3: Single batched LEFT JOIN query for dashboard (habits + completions, no N+1)
-- Phase 3: Frequency-aware filtering in application code (daily=always, weekly=always, custom=day-of-week check)
-- Phase 3: Optimistic UI with useState for completion toggle, server action in background
-- Phase 3: force-dynamic on dashboard page to ensure fresh data on every load
-- Phase 3: Completion notes via Popover with Textarea, saved via updateCompletionNotes server action
-- Phase 3: Visual states: completed (green border/bg, checkmark, strikethrough), pending (default border/bg, empty circle)
+- M2: framer-motion for advanced animations (spring physics, AnimatePresence, gesture drag)
+- M2: Gamification system with XP (10 base + streak*2 bonus), levels (n*n*50 formula), 16 achievements
+- M2: Swipe right to complete, swipe left to reveal actions (framer-motion drag)
+- M2: Day navigation via swipe, arrow buttons, and keyboard shortcuts (ArrowLeft/Right, t for today)
+- M2: Canvas-based confetti for level-up celebrations (60 particles, 8 colors)
+- M2: Achievement toasts with spring slide-in, auto-dismiss after 4s
+- M2: GamificationProvider context for global event triggering
+- M2: Bottom navigation bar replaces mobile Sheet drawer, uses layoutId for sliding indicator
+- M2: PWA manifest with standalone display for add-to-homescreen
+- M2: tap-feedback CSS utility class with active:scale-[0.97]
+- M2: Safe area insets via env(safe-area-inset-*) and viewport-fit: cover
+- M2: Gamification is non-critical (try/catch wrapped, core features work if gamification fails)
+- M2: No XP reversal on un-complete (simplicity over exactness)
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-None yet.
+None.
 
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Phase 3 fully complete. Ready for Phase 4 (Streaks & Statistics).
+Stopped at: Milestone 2 fully complete. All 11 phases shipped.
 Resume file: None

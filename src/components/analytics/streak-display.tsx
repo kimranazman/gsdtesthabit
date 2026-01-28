@@ -3,6 +3,8 @@
 import { Flame, Trophy, TrendingUp, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { HabitIcon } from "@/components/habits/habit-icon";
+import { motion, useReducedMotion } from "framer-motion";
+import { staggerItemVariants } from "@/components/motion";
 import type { Habit } from "@/lib/db/schema";
 import type { StreakResult, CompletionRateResult } from "@/lib/stats";
 
@@ -127,72 +129,94 @@ export function OverallStatsCards({
   overallRate7d,
   bestStreakHabit,
 }: OverallStatsProps) {
+  const prefersReduced = useReducedMotion();
+  const noMotion = !!prefersReduced;
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="size-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Active Habits</span>
-          </div>
-          <p className="text-3xl font-bold tabular-nums">{totalHabits}</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Zap className="size-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
-              Total Completions
-            </span>
-          </div>
-          <p className="text-3xl font-bold tabular-nums">{totalCompletions}</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="size-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">7-Day Rate</span>
-          </div>
-          <p
-            className={`text-3xl font-bold tabular-nums ${
-              overallRate7d >= 80
-                ? "text-green-600 dark:text-green-400"
-                : overallRate7d >= 50
-                  ? "text-yellow-600 dark:text-yellow-400"
-                  : "text-red-500 dark:text-red-400"
-            }`}
-          >
-            {overallRate7d}%
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Trophy className="size-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Best Streak</span>
-          </div>
-          {bestStreakHabit ? (
-            <div>
-              <p className="text-3xl font-bold tabular-nums">
-                {bestStreakHabit.streak}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {bestStreakHabit.name}
-              </p>
+    <motion.div
+      className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+      variants={noMotion ? undefined : {
+        hidden: { opacity: 0 },
+        visible: {
+          opacity: 1,
+          transition: { staggerChildren: 0.08, delayChildren: 0.02 },
+        },
+      }}
+      initial={noMotion ? undefined : "hidden"}
+      animate={noMotion ? undefined : "visible"}
+    >
+      <motion.div variants={noMotion ? undefined : staggerItemVariants}>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="size-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Active Habits</span>
             </div>
-          ) : (
-            <p className="text-3xl font-bold tabular-nums text-muted-foreground">
-              --
+            <p className="text-3xl font-bold tabular-nums">{totalHabits}</p>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div variants={noMotion ? undefined : staggerItemVariants}>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="size-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Total Completions
+              </span>
+            </div>
+            <p className="text-3xl font-bold tabular-nums">{totalCompletions}</p>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div variants={noMotion ? undefined : staggerItemVariants}>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="size-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">7-Day Rate</span>
+            </div>
+            <p
+              className={`text-3xl font-bold tabular-nums ${
+                overallRate7d >= 80
+                  ? "text-green-600 dark:text-green-400"
+                  : overallRate7d >= 50
+                    ? "text-yellow-600 dark:text-yellow-400"
+                    : "text-red-500 dark:text-red-400"
+              }`}
+            >
+              {overallRate7d}%
             </p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div variants={noMotion ? undefined : staggerItemVariants}>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Trophy className="size-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Best Streak</span>
+            </div>
+            {bestStreakHabit ? (
+              <div>
+                <p className="text-3xl font-bold tabular-nums">
+                  {bestStreakHabit.streak}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {bestStreakHabit.name}
+                </p>
+              </div>
+            ) : (
+              <p className="text-3xl font-bold tabular-nums text-muted-foreground">
+                --
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }

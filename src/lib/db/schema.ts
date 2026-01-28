@@ -6,6 +6,7 @@ import {
   integer,
   date,
   timestamp,
+  jsonb,
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
@@ -60,6 +61,30 @@ export const completions = pgTable(
   ]
 );
 
+// ---------------------------------------------------------------------------
+// Gamification tables
+// ---------------------------------------------------------------------------
+
+export const userStats = pgTable("user_stats", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  totalXp: integer("total_xp").notNull().default(0),
+  level: integer("level").notNull().default(1),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const userAchievements = pgTable(
+  "user_achievements",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    achievementId: text("achievement_id").notNull(),
+    unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
+    metadata: jsonb("metadata"),
+  },
+  (table) => [
+    uniqueIndex("user_achievements_achievement_id_idx").on(table.achievementId),
+  ]
+);
+
 // Type exports for use throughout the app
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
@@ -67,3 +92,7 @@ export type Habit = typeof habits.$inferSelect;
 export type NewHabit = typeof habits.$inferInsert;
 export type Completion = typeof completions.$inferSelect;
 export type NewCompletion = typeof completions.$inferInsert;
+export type UserStats = typeof userStats.$inferSelect;
+export type NewUserStats = typeof userStats.$inferInsert;
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type NewUserAchievement = typeof userAchievements.$inferInsert;

@@ -1,6 +1,7 @@
 "use client";
 
 import { ThemeProvider } from "next-themes";
+import { GamificationProvider } from "@/components/gamification/gamification-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -9,7 +10,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       defaultTheme="system"
       enableSystem
     >
-      {children}
+      <GamificationProvider>
+        {children}
+      </GamificationProvider>
     </ThemeProvider>
   );
 }

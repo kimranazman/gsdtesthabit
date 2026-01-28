@@ -3,6 +3,8 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HabitIcon } from "@/components/habits/habit-icon";
+import { motion, useReducedMotion } from "framer-motion";
+import { staggerItemVariants } from "@/components/motion";
 import type { HabitComparisonItem } from "@/lib/stats";
 
 interface HabitComparisonProps {
@@ -55,6 +57,9 @@ function ComparisonRow({ item }: { item: HabitComparisonItem }) {
 }
 
 export function HabitComparison({ best, struggling }: HabitComparisonProps) {
+  const prefersReduced = useReducedMotion();
+  const noMotion = !!prefersReduced;
+
   if (best.length === 0 && struggling.length === 0) {
     return (
       <Card>
@@ -71,56 +76,71 @@ export function HabitComparison({ best, struggling }: HabitComparisonProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <motion.div
+      className="grid grid-cols-1 md:grid-cols-2 gap-4"
+      variants={noMotion ? undefined : {
+        hidden: { opacity: 0 },
+        visible: {
+          opacity: 1,
+          transition: { staggerChildren: 0.12, delayChildren: 0.05 },
+        },
+      }}
+      initial={noMotion ? undefined : "hidden"}
+      animate={noMotion ? undefined : "visible"}
+    >
       {/* Best performing */}
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="size-5 text-green-500" />
-            <CardTitle className="text-base">Best Performing</CardTitle>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Top habits by 30-day completion rate
-          </p>
-        </CardHeader>
-        <CardContent>
-          {best.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">No data yet</p>
-          ) : (
-            <div className="divide-y">
-              {best.map((item, idx) => (
-                <ComparisonRow key={item.habitId} item={item} />
-              ))}
+      <motion.div variants={noMotion ? undefined : staggerItemVariants}>
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="size-5 text-green-500" />
+              <CardTitle className="text-base">Best Performing</CardTitle>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <p className="text-xs text-muted-foreground">
+              Top habits by 30-day completion rate
+            </p>
+          </CardHeader>
+          <CardContent>
+            {best.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">No data yet</p>
+            ) : (
+              <div className="divide-y">
+                {best.map((item) => (
+                  <ComparisonRow key={item.habitId} item={item} />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Struggling */}
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <TrendingDown className="size-5 text-red-500" />
-            <CardTitle className="text-base">Needs Attention</CardTitle>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Habits with lowest 30-day completion rate
-          </p>
-        </CardHeader>
-        <CardContent>
-          {struggling.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">
-              All habits are performing well!
-            </p>
-          ) : (
-            <div className="divide-y">
-              {struggling.map((item, idx) => (
-                <ComparisonRow key={item.habitId} item={item} />
-              ))}
+      <motion.div variants={noMotion ? undefined : staggerItemVariants}>
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <TrendingDown className="size-5 text-red-500" />
+              <CardTitle className="text-base">Needs Attention</CardTitle>
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            <p className="text-xs text-muted-foreground">
+              Habits with lowest 30-day completion rate
+            </p>
+          </CardHeader>
+          <CardContent>
+            {struggling.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">
+                All habits are performing well!
+              </p>
+            ) : (
+              <div className="divide-y">
+                {struggling.map((item) => (
+                  <ComparisonRow key={item.habitId} item={item} />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }

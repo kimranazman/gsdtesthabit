@@ -11,6 +11,8 @@ import {
   Cell,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion, useReducedMotion } from "framer-motion";
+import { fadeInUpVariants } from "@/components/motion";
 import type { DayOfWeekData } from "@/lib/stats";
 
 interface DayOfWeekChartProps {
@@ -45,6 +47,9 @@ function CustomTooltip({
 }
 
 export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
+  const prefersReduced = useReducedMotion();
+  const noMotion = !!prefersReduced;
+
   const hasData = data.some((d) => d.expected > 0);
   const bestDay = data.reduce((best, d) => (d.rate > best.rate ? d : best), data[0]);
   const worstDay = data
@@ -70,6 +75,11 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
   }
 
   return (
+    <motion.div
+      variants={noMotion ? undefined : fadeInUpVariants}
+      initial={noMotion ? undefined : "hidden"}
+      animate={noMotion ? undefined : "visible"}
+    >
     <Card>
       <CardHeader>
         <CardTitle>Day-of-Week Patterns</CardTitle>
@@ -138,5 +148,6 @@ export function DayOfWeekChart({ data }: DayOfWeekChartProps) {
         </div>
       </CardContent>
     </Card>
+    </motion.div>
   );
 }

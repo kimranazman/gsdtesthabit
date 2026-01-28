@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button";
 import { SortableHabitCard } from "./sortable-habit-card";
 import { HabitFormDialog } from "./habit-form-dialog";
 import { reorderHabits } from "@/lib/actions/habits";
+import { motion, useReducedMotion } from "framer-motion";
+import { staggerContainerVariants, staggerItemVariants } from "@/components/motion";
 import type { Habit, Category } from "@/lib/db/schema";
 
 interface HabitsListProps {
@@ -53,6 +55,9 @@ export function HabitsList({
   useEffect(() => {
     setHabits(initialHabits);
   }, [initialHabits]);
+
+  const prefersReduced = useReducedMotion();
+  const noMotion = !!prefersReduced;
 
   const filteredHabits = selectedCategoryId
     ? habits.filter((h) => h.categoryId === selectedCategoryId)
@@ -166,16 +171,25 @@ export function HabitsList({
           items={filteredHabits.map((h) => h.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-2">
+          <motion.div
+            className="space-y-2"
+            variants={noMotion ? undefined : staggerContainerVariants}
+            initial={noMotion ? undefined : "hidden"}
+            animate={noMotion ? undefined : "visible"}
+          >
             {filteredHabits.map((habit) => (
-              <SortableHabitCard
+              <motion.div
                 key={habit.id}
-                habit={habit}
-                category={getCategoryForHabit(habit)}
-                onEdit={handleEdit}
-              />
+                variants={noMotion ? undefined : staggerItemVariants}
+              >
+                <SortableHabitCard
+                  habit={habit}
+                  category={getCategoryForHabit(habit)}
+                  onEdit={handleEdit}
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </SortableContext>
       </DndContext>
 

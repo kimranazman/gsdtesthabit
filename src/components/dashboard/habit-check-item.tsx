@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef, useEffect } from "react";
+import { useState, useTransition, useRef, useEffect, useCallback } from "react";
 import { Check, MessageSquare, Loader2, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { HabitIcon } from "@/components/habits/habit-icon";
 import { toggleCompletion, updateCompletionNotes } from "@/lib/actions/completions";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { SwipeableHabitCard } from "./swipeable-habit-card";
+import { XpPopup } from "@/components/gamification/xp-popup";
+import { useGamification } from "@/components/gamification/gamification-provider";
 import type { HabitWithCompletion } from "@/lib/db/queries";
 
 interface HabitCheckItemProps {
@@ -32,9 +36,16 @@ export function HabitCheckItem({ habit, dateStr, currentStreak, index, onToggleR
   const [isPending, startTransition] = useTransition();
   const [isNotesPending, startNotesTransition] = useTransition();
   const [justCompleted, setJustCompleted] = useState(false);
+  const [xpGained, setXpGained] = useState<number | null>(null);
+  const [xpTriggerKey, setXpTriggerKey] = useState(0);
   const toggleRef = useRef<HTMLButtonElement>(null);
 
   const isCompleted = optimisticCompleted;
+  const prefersReduced = useReducedMotion();
+  const noMotion = !!prefersReduced;
+
+  // Gamification context
+  const { triggerGamificationEvents } = useGamification();
 
   // Register the toggle ref for keyboard shortcuts
   useEffect(() => {
@@ -42,7 +53,13 @@ export function HabitCheckItem({ habit, dateStr, currentStreak, index, onToggleR
     return () => onToggleRef?.(null);
   }, [onToggleRef]);
 
-  function handleToggle() {
+  // Sync optimistic state when habit prop changes (e.g., from date navigation)
+  useEffect(() => {
+    setOptimisticCompleted(!!habit.completion);
+    setNotes(habit.completion?.notes ?? "");
+  }, [habit.completion]);
+
+  const handleToggle = useCallback(() => {
     const wasCompleted = optimisticCompleted;
     // Optimistic update
     setOptimisticCompleted(!optimisticCompleted);
@@ -61,12 +78,41 @@ export function HabitCheckItem({ habit, dateStr, currentStreak, index, onToggleR
         if (!result.completed) {
           setNotes("");
         }
+
+        // Trigger gamification effects on completion
+        if (result.completed && result.gamification) {
+          // Show +XP floating animation
+          setXpGained(result.gamification.xpGained);
+          setXpTriggerKey((k) => k + 1);
+
+          // Trigger level-up / achievement celebrations
+          triggerGamificationEvents(result.gamification);
+        }
       } catch {
         // Revert on error
         setOptimisticCompleted(optimisticCompleted);
       }
     });
-  }
+  }, [optimisticCompleted, habit.id, dateStr, triggerGamificationEvents]);
+
+  // Swipe-triggered complete (only triggers if not already completed)
+  const handleSwipeComplete = useCallback(() => {
+    if (!optimisticCompleted) {
+      handleToggle();
+    }
+  }, [optimisticCompleted, handleToggle]);
+
+  // Swipe-triggered undo (only triggers if completed)
+  const handleSwipeUndo = useCallback(() => {
+    if (optimisticCompleted) {
+      handleToggle();
+    }
+  }, [optimisticCompleted, handleToggle]);
+
+  // Open notes popover
+  const handleOpenNotes = useCallback(() => {
+    setNotesOpen(true);
+  }, []);
 
   function handleSaveNotes() {
     startNotesTransition(async () => {
@@ -79,15 +125,17 @@ export function HabitCheckItem({ habit, dateStr, currentStreak, index, onToggleR
     });
   }
 
-  return (
+  const cardContent = (
     <div
       className={cn(
-        "group flex items-center gap-3 rounded-lg border p-4 transition-all duration-200",
+        "group relative flex items-center gap-3 rounded-lg border p-4 transition-all duration-200",
         isCompleted
           ? "border-green-200 bg-green-50/50 dark:border-green-900/30 dark:bg-green-950/20"
           : "border-border bg-card hover:border-primary/20 hover:shadow-sm"
       )}
     >
+      {/* XP floating animation */}
+      <XpPopup amount={xpGained} triggerKey={xpTriggerKey} />
       {/* Keyboard shortcut badge */}
       {index != null && index < 9 && (
         <span className="hidden md:flex size-5 shrink-0 items-center justify-center rounded border border-border bg-muted text-[10px] font-mono text-muted-foreground">
@@ -95,28 +143,79 @@ export function HabitCheckItem({ habit, dateStr, currentStreak, index, onToggleR
         </span>
       )}
 
-      {/* Completion toggle button */}
-      <button
+      {/* Completion toggle button with spring animation */}
+      <motion.button
         ref={toggleRef}
         type="button"
         onClick={handleToggle}
         disabled={isPending}
         className={cn(
-          "flex size-10 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200",
+          "flex size-10 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-200",
           isCompleted
             ? "border-green-500 bg-green-500 text-white"
             : "border-muted-foreground/30 bg-background hover:border-primary/50",
-          isPending && "opacity-60",
-          justCompleted && "animate-bounce-check"
+          isPending && "opacity-60"
         )}
         aria-label={isCompleted ? "Mark as incomplete" : "Mark as complete"}
+        animate={
+          noMotion
+            ? undefined
+            : justCompleted
+              ? {
+                  scale: [1, 1.3, 0.85, 1.15, 1],
+                  rotate: [0, -8, 6, -3, 0],
+                }
+              : { scale: 1, rotate: 0 }
+        }
+        transition={
+          noMotion
+            ? undefined
+            : {
+                type: "spring",
+                stiffness: 400,
+                damping: 15,
+                duration: 0.5,
+              }
+        }
+        whileTap={noMotion ? undefined : { scale: 0.9 }}
+        whileHover={noMotion ? undefined : { scale: 1.08 }}
       >
-        {isPending ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : isCompleted ? (
-          <Check className={cn("size-5", justCompleted && "animate-check-draw")} strokeWidth={3} />
-        ) : null}
-      </button>
+        <AnimatePresence mode="wait">
+          {isPending ? (
+            <motion.span
+              key="loading"
+              initial={noMotion ? undefined : { opacity: 0, scale: 0.5 }}
+              animate={noMotion ? undefined : { opacity: 1, scale: 1 }}
+              exit={noMotion ? undefined : { opacity: 0, scale: 0.5 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Loader2 className="size-4 animate-spin" />
+            </motion.span>
+          ) : isCompleted ? (
+            <motion.span
+              key="check"
+              initial={noMotion ? undefined : { opacity: 0, scale: 0 }}
+              animate={noMotion ? undefined : { opacity: 1, scale: 1 }}
+              exit={noMotion ? undefined : { opacity: 0, scale: 0 }}
+              transition={
+                noMotion
+                  ? undefined
+                  : { type: "spring", stiffness: 500, damping: 20 }
+              }
+            >
+              <Check className="size-5" strokeWidth={3} />
+            </motion.span>
+          ) : (
+            <motion.span
+              key="empty"
+              initial={noMotion ? undefined : { opacity: 0 }}
+              animate={noMotion ? undefined : { opacity: 1 }}
+              exit={noMotion ? undefined : { opacity: 0 }}
+              transition={{ duration: 0.1 }}
+            />
+          )}
+        </AnimatePresence>
+      </motion.button>
 
       {/* Habit icon + info */}
       <div
@@ -218,5 +317,16 @@ export function HabitCheckItem({ habit, dateStr, currentStreak, index, onToggleR
         </PopoverContent>
       </Popover>
     </div>
+  );
+
+  return (
+    <SwipeableHabitCard
+      isCompleted={isCompleted}
+      onComplete={handleSwipeComplete}
+      onOpenNotes={handleOpenNotes}
+      onUndoComplete={handleSwipeUndo}
+    >
+      {cardContent}
+    </SwipeableHabitCard>
   );
 }
