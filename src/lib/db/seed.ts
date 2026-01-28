@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { categories, habits, completions } from "./schema";
+import { categories, habits, completions, userStats, userAchievements } from "./schema";
 import { subDays, format, getDay } from "date-fns";
 
 async function seed() {
@@ -23,11 +23,13 @@ async function seed() {
 
   console.log("Seeding database...");
 
-  // Clear existing data
+  // Clear existing data (including gamification tables so stats stay consistent)
+  await db.delete(userAchievements);
+  await db.delete(userStats);
   await db.delete(completions);
   await db.delete(habits);
   await db.delete(categories);
-  console.log("Cleared existing data.");
+  console.log("Cleared existing data (including gamification stats).");
 
   // Create categories
   const [healthCategory] = await db

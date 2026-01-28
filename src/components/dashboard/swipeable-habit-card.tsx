@@ -22,9 +22,9 @@ const MAX_DRAG_LEFT = -160; // max left drag distance
 interface SwipeableHabitCardProps {
   children: ReactNode;
   isCompleted: boolean;
-  onComplete: () => void;
+  onComplete: () => void | Promise<void>;
   onOpenNotes: () => void;
-  onUndoComplete: () => void;
+  onUndoComplete: () => void | Promise<void>;
   className?: string;
 }
 
@@ -86,21 +86,18 @@ export function SwipeableHabitCard({
       ) {
         // Show sweep animation
         setShowCompleteSweep(true);
+
+        // First snap the card back to origin position so it doesn't stay off-screen
         await controls.start({
-          x: containerRef.current?.offsetWidth ?? 400,
-          transition: { type: "spring", stiffness: 300, damping: 30 },
+          x: 0,
+          transition: { type: "spring", stiffness: 400, damping: 35 },
         });
 
-        onComplete();
+        // Clear the sweep overlay after the animation completes
+        setShowCompleteSweep(false);
 
-        // Snap back after a short delay
-        setTimeout(async () => {
-          setShowCompleteSweep(false);
-          await controls.start({
-            x: 0,
-            transition: { type: "spring", stiffness: 400, damping: 35 },
-          });
-        }, 200);
+        // Now trigger the completion callback (server action)
+        onComplete();
         return;
       }
 
