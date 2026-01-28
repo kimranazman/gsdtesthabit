@@ -4,10 +4,20 @@ import { categories, habits, completions } from "./schema";
 import { subDays, format, getDay } from "date-fns";
 
 async function seed() {
+  const connectionString =
+    process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
+
+  if (!connectionString) {
+    throw new Error(
+      "Missing database connection string. Set POSTGRES_URL or DATABASE_URL."
+    );
+  }
+
+  const isSSL = !connectionString.includes("localhost");
+
   const pool = new Pool({
-    connectionString:
-      process.env.DATABASE_URL ||
-      "postgresql://khairul@localhost:5432/habittracker",
+    connectionString,
+    ssl: isSSL ? { rejectUnauthorized: false } : false,
   });
   const db = drizzle(pool);
 
